@@ -344,14 +344,16 @@ def convert_coco_json(json_dir='../coco/annotations/', use_segments=False,just_c
 
                 except:
                     warn += 1
-                    print(f"{writed_file=}")
+                    print(f"拟修正{writed_file=}")
                     # print(f"{c=}")
                     print(f"{s.shape=}")
                     print(f"{d.shape=}")
                     print("修正.......")
                     # C:\winyolox\COCO2017\COCO\annotations\txts\labels\train2017\000000099844.txt
                     #                                                             000000201706.txt
-                    s_unique = np.unique(s,axis=0)
+                    _, idx = np.unique(s, axis=0, return_index=True)
+                    s_unique = s[np.sort(idx)]
+
                     print(f"    {s_unique.shape=}")
                     np.savetxt(writed_file, s_unique,fmt="%f", delimiter=" ")
                     s_unique_loaded = np.loadtxt(writed_file)
