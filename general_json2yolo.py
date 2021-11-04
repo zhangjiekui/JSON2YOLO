@@ -254,7 +254,7 @@ def convert_coco_json(json_dir='../coco/annotations/', use_segments=False,just_c
         save_dir = make_dirs(save_dir)  # output directory
 
     # Import json
-    for json_file in sorted(Path(json_dir).resolve().glob('*.json'),reverse=True):
+    for json_file in sorted(Path(json_dir).resolve().glob('*.json'),reverse=False):
         fn = Path(save_dir) / 'labels' / json_file.stem.replace('instances_', '')  # folder name
         if not just_compare:
             fn.mkdir()
@@ -348,6 +348,14 @@ def convert_coco_json(json_dir='../coco/annotations/', use_segments=False,just_c
                     # print(f"{c=}")
                     print(f"{s.shape=}")
                     print(f"{d.shape=}")
+                    print("修正.......")
+                    # C:\winyolox\COCO2017\COCO\annotations\txts\labels\train2017\000000099844.txt
+                    #                                                             000000201706.txt
+                    s_unique = np.unique(s,axis=0)
+                    print(f"    {s_unique.shape=}")
+                    np.savetxt(writed_file, s_unique,fmt="%f", delimiter=" ")
+                    s_unique_loaded = np.loadtxt(writed_file)
+                    print(f"{    s_unique_loaded.shape=}")
 
                 # comp_result = cmp_file(writed_file, original_txt_file)
                 if comp_result:
