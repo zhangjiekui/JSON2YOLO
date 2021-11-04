@@ -247,21 +247,15 @@ def convert_ath_json(json_dir):  # dir contains json annotations and images
     print('Done. Output saved to %s' % Path(dir).absolute())
 
 
-def convert_coco_json(json_dir='../coco/annotations/', use_segments=False, cls91to80=False, compare_to_orininal_provided_coco_txt=True, decimals = 3, coco_orininal_provided_txt_dir=r'C:\winyolox\coco128_txt\labels'):
-    save_dir = make_dirs(dir=json_dir+r'/txts')  # output directory
+def convert_coco_json(json_dir='../coco/annotations/', use_segments=False,just_compare=False, cls91to80=False, compare_to_orininal_provided_coco_txt=True, decimals = 3, coco_orininal_provided_txt_dir=r'C:\winyolox\coco128_txt\labels'):
     coco80 = coco91_to_coco80_class()
+    if not just_compare: # 只是比较是否一致（说明文件已经生成过了）
+        save_dir = make_dirs(dir=json_dir+r'/txts')  # output directory
 
     # Import json
     for json_file in sorted(Path(json_dir).resolve().glob('*.json'),reverse=True):
-        if compare_to_orininal_provided_coco_txt:
-            txt_dir = Path(coco_orininal_provided_txt_dir)/json_file.stem.replace('instances_', '')
-            coco_txt_files = sorted(txt_dir.resolve().glob('*.txt'))
-            if len(coco_txt_files)==0:
-                continue
-            coco_img_files_names = [x.stem + '.jpg' for x in coco_txt_files]
-
         fn = Path(save_dir) / 'labels' / json_file.stem.replace('instances_', '')  # folder name
-        if not os.path.exists(fn):
+        if not just_compare:
             fn.mkdir()
 
         with open(json_file) as f:
@@ -273,33 +267,41 @@ def convert_coco_json(json_dir='../coco/annotations/', use_segments=False, cls91
         print("")
         print(f"在{json_file}中共有{len(images)}张图片！{len(data['annotations'])}个标注。")
 
+        if compare_to_orininal_provided_coco_txt:
+            txt_dir = Path(coco_orininal_provided_txt_dir)/json_file.stem.replace('instances_', '')
+            coco_txt_files = sorted(txt_dir.resolve().glob('*.txt'))
+            if len(coco_txt_files)==0:
+                continue
+            coco_img_files_names = [x.stem + '.jpg' for x in coco_txt_files]
+
         # Write labels file
         # """
-        for x in tqdm(data['annotations'], desc=f'Annotations {json_file}'):
-            if x['iscrowd']:
-                continue
-            idx = '%g' % x['image_id']
-            img = images[idx]
-            h, w, f = img['height'], img['width'], img['file_name']
+        if not just_compare:
+            for x in tqdm(data['annotations'], desc=f'Annotations {json_file}'):
+                if x['iscrowd']:
+                    continue
+                idx = '%g' % x['image_id']
+                img = images[idx]
+                h, w, f = img['height'], img['width'], img['file_name']
 
-            if  compare_to_orininal_provided_coco_txt and f in coco_img_files_names:
-                # The COCO box format is [top left x, top left y, width, height]
-                box = np.array(x['bbox'], dtype=np.float64)
-                box[:2] += box[2:] / 2  # xy top-left corner to center
-                box[[0, 2]] /= w  # normalize x
-                box[[1, 3]] /= h  # normalize y
+                if  compare_to_orininal_provided_coco_txt and f in coco_img_files_names:
+                    # The COCO box format is [top left x, top left y, width, height]
+                    box = np.array(x['bbox'], dtype=np.float64)
+                    box[:2] += box[2:] / 2  # xy top-left corner to center
+                    box[[0, 2]] /= w  # normalize x
+                    box[[1, 3]] /= h  # normalize y
 
-                # Segments
-                if use_segments:
-                    segments = [j for i in x['segmentation'] for j in i]  # all segments concatenated
-                    s = (np.array(segments).reshape(-1, 2) / np.array([w, h])).reshape(-1).tolist()
+                    # Segments
+                    if use_segments:
+                        segments = [j for i in x['segmentation'] for j in i]  # all segments concatenated
+                        s = (np.array(segments).reshape(-1, 2) / np.array([w, h])).reshape(-1).tolist()
 
-                # Write
-                if box[2] > 0 and box[3] > 0:  # if w > 0 and h > 0
-                    cls = coco80[x['category_id'] - 1] if cls91to80 else x['category_id'] - 1  # class
-                    line = cls, *(s if use_segments else box)  # cls, box or segments
-                    with open((fn / f).with_suffix('.txt'), 'a') as file:
-                        file.write(('%g ' * len(line)).rstrip() % line + '\n')
+                    # Write
+                    if box[2] > 0 and box[3] > 0:  # if w > 0 and h > 0
+                        cls = coco80[x['category_id'] - 1] if cls91to80 else x['category_id'] - 1  # class
+                        line = cls, *(s if use_segments else box)  # cls, box or segments
+                        with open((fn / f).with_suffix('.txt'), 'a') as file:
+                            file.write(('%g ' * len(line)).rstrip() % line + '\n')
 
             if not compare_to_orininal_provided_coco_txt:
                 # The COCO box format is [top left x, top left y, width, height]
@@ -375,7 +377,7 @@ if __name__ == '__main__':
         coco_txt_dir =r'C:\winyolox\COCO2017\COCO\labels'
         # coco_txt_dir = r'C:\winyolox\coco128_txt\labels' # todo 暂时没有验证集val的label
 
-        convert_coco_json(path, cls91to80=True, coco_orininal_provided_txt_dir=coco_txt_dir)
+        convert_coco_json(path, cls91to80=True, just_compare=True,coco_orininal_provided_txt_dir=coco_txt_dir)
         # convert_coco_json('../../Downloads/Objects365')  # directory with *.json
 
     elif source == 'infolks':  # Infolks https://infolks.info/
