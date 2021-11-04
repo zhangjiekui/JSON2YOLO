@@ -249,8 +249,9 @@ def convert_ath_json(json_dir):  # dir contains json annotations and images
 
 def convert_coco_json(json_dir='../coco/annotations/', use_segments=False,just_compare=False, cls91to80=False, compare_to_orininal_provided_coco_txt=True, decimals = 3, coco_orininal_provided_txt_dir=r'C:\winyolox\coco128_txt\labels'):
     coco80 = coco91_to_coco80_class()
+    save_dir = json_dir + r'/txts'
     if not just_compare: # 只是比较是否一致（说明文件已经生成过了）
-        save_dir = make_dirs(dir=json_dir+r'/txts')  # output directory
+        save_dir = make_dirs(save_dir)  # output directory
 
     # Import json
     for json_file in sorted(Path(json_dir).resolve().glob('*.json'),reverse=True):
@@ -330,12 +331,24 @@ def convert_coco_json(json_dir='../coco/annotations/', use_segments=False,just_c
             original_txt_file_dir = coco_txt_files[0].parent
             right=0
             error=0
+            warn =0
             for writed_file in coco_txt_files_writed:
                 original_txt_file = original_txt_file_dir/ writed_file.name
                 s=np.loadtxt(writed_file)
                 d=np.loadtxt(original_txt_file)
                 # decimals = 3
-                comp_result=(np.around(s,decimals)==np.around(d,decimals)).all()
+                try:
+                    # c = np.around(s,decimals)==np.around(d,decimals)
+                    # comp_result = c.all()
+                    comp_result =np.allclose(s,d, atol=1e-04)
+
+                except:
+                    warn += 1
+                    print(f"{writed_file=}")
+                    # print(f"{c=}")
+                    print(f"{s.shape=}")
+                    print(f"{d.shape=}")
+
                 # comp_result = cmp_file(writed_file, original_txt_file)
                 if comp_result:
                     right+=1
@@ -344,7 +357,7 @@ def convert_coco_json(json_dir='../coco/annotations/', use_segments=False,just_c
                     print("不一致的文件：",writed_file)
             print(
                 f"目标文件有{len(coco_img_files_names)}个,写入的文件有{len(coco_img_files_names_writed)}个,其中不在的文件名有：{set(coco_img_files_names) - set(coco_img_files_names_writed)}")
-            print(f"写入的{len(coco_img_files_names_writed)}个文件中，数值都一致的文件有{right}个,不一致的文件有{error}个！")
+            print(f"写入的{len(coco_img_files_names_writed)}个文件中，数值都一致的文件有{right}个,不一致的文件有{error}个！警告的文件有{warn}个，发现是有重复行！")
             o_cmp=cmp_file(original_txt_file,original_txt_file)
             w_cmp = cmp_file(writed_file,writed_file)
 
