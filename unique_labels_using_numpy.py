@@ -8,6 +8,6 @@ s_unique = s[np.sort(idx)]
 print(s_unique)
 
 print(f"    {s_unique.shape=}")
-np.savetxt(writed_file, s_unique,fmt="%f", delimiter=" ")
+np.savetxt(writed_file, s_unique,fmt="%g", delimiter=" ")
 s_unique_loaded = np.loadtxt(writed_file)
 print(f"{    s_unique_loaded.shape=}")
