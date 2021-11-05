@@ -254,7 +254,7 @@ def convert_coco_json(json_dir='../coco/annotations/', use_segments=False,just_c
         save_dir = make_dirs(save_dir)  # output directory
 
     # Import json
-    for json_file in sorted(Path(json_dir).resolve().glob('*.json'),reverse=False):
+    for json_file in sorted(Path(json_dir).resolve().glob('*.json'),reverse=True):
         fn = Path(save_dir) / 'labels' / json_file.stem.replace('instances_', '')  # folder name
         if not just_compare:
             fn.mkdir()
@@ -358,6 +358,7 @@ def convert_coco_json(json_dir='../coco/annotations/', use_segments=False,just_c
                     np.savetxt(writed_file, s_unique,fmt="%f", delimiter=" ")
                     s_unique_loaded = np.loadtxt(writed_file)
                     print(f"{    s_unique_loaded.shape=}")
+                    comp_result = np.allclose(s_unique_loaded, d, atol=1e-04)
 
                 # comp_result = cmp_file(writed_file, original_txt_file)
                 if comp_result:
@@ -367,7 +368,7 @@ def convert_coco_json(json_dir='../coco/annotations/', use_segments=False,just_c
                     print("不一致的文件：",writed_file)
             print(
                 f"目标文件有{len(coco_img_files_names)}个,写入的文件有{len(coco_img_files_names_writed)}个,其中不在的文件名有：{set(coco_img_files_names) - set(coco_img_files_names_writed)}")
-            print(f"写入的{len(coco_img_files_names_writed)}个文件中，数值都一致的文件有{right}个,不一致的文件有{error}个！警告的文件有{warn}个，发现是有重复行！")
+            print(f"写入的{len(coco_img_files_names_writed)}个文件中，数值都一致的文件有{right}个,不一致的文件有{error}个！警告[有重复行]的文件有{warn}个，！")
             o_cmp=cmp_file(original_txt_file,original_txt_file)
             w_cmp = cmp_file(writed_file,writed_file)
 
