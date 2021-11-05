@@ -355,7 +355,7 @@ def convert_coco_json(json_dir='../coco/annotations/', use_segments=False,just_c
                     s_unique = s[np.sort(idx)]
 
                     print(f"    {s_unique.shape=}")
-                    np.savetxt(writed_file, s_unique,fmt="%f", delimiter=" ")
+                    np.savetxt(writed_file, s_unique,fmt="%g", delimiter=" ")
                     s_unique_loaded = np.loadtxt(writed_file)
                     print(f"{    s_unique_loaded.shape=}")
                     comp_result = np.allclose(s_unique_loaded, d, atol=1e-04)
